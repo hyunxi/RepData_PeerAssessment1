@@ -3,7 +3,7 @@
 ## Loading and preprocessing the data
 
 ```r
-    unzip("activity.zip")
+    #unzip("activity.zip")
     data <- read.csv("activity.csv", header = T)
     str(data)
 ```
@@ -74,13 +74,14 @@ Calculate and report the total number of missing values in the dataset (i.e. the
 - There are 2304 rows with NAs.
 
 
-For filling in all of the missing values in the dataset, I chose to use the mean for that 5-minute interval.
-Create a new dataset that is equal to the original dataset but with the missing data filled in.
+For filling in all of the missing values in the dataset, I chose to use the mean for that 5-minute interval. Created a new dataset ("imputed_data") that is equal to the original dataset but with the missing data filled in.
 
 
 ```r
     imputed_data <- merge(data, daily_activity_pattern, by="interval")
     names(imputed_data) <- c("interval", "steps", "date", "mean_steps")
+
+    #if there are missing values ("NA"), replace them with the mean steps of that interval
     imputed_data$steps <- ifelse(is.na(imputed_data$steps), imputed_data$mean_steps, imputed_data$steps)
 ```
 
@@ -92,6 +93,7 @@ Make a histogram of the total number of steps taken each day
 ```
 
 ![plot of chunk unnamed-chunk-9](./PA1_template_files/figure-html/unnamed-chunk-9.png) 
+
 Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact 
 of imputing missing data on the estimates of the total daily number of steps?
 
@@ -104,3 +106,31 @@ of imputing missing data on the estimates of the total daily number of steps?
 - Conclusion : **No difference** and **no impact** on the estimates
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```r
+    #assign the day of week to a new variable "day"
+    data$day <- weekdays(as.Date(data$date))
+
+    #reassign variable "day" to a factor variable
+    data$day <- as.factor (ifelse(data$day %in% c("Saturday", "Sunday"), "weekend", "weekday"))
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+
+```r
+    par(mfrow = c(2, 1))
+    for (dayType in c("weekday", "weekend")){
+          ave_steps <- aggregate(steps ~ interval, 
+                                 data = data, 
+                                 subset = (data$day==dayType),
+                                 FUN = "mean")
+          plot( ave_steps,
+                type = "l", main= dayType, 
+                xlab ="5 min intervals", ylab="Ave no. of steps taken")  
+    }
+```
+
+![plot of chunk unnamed-chunk-12](./PA1_template_files/figure-html/unnamed-chunk-12.png) 
